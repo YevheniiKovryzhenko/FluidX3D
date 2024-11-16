@@ -553,7 +553,7 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 
 /*void main_setup() { // electric ducted fan (EDF); required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
-	const uint3 lbm_N = resolution(float3(1.0f, 1.5f, 1.0f), 8000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	const uint3 lbm_N = resolution(float3(1.0f, 1.5f, 1.0f), 7000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const float lbm_Re = 1000000.0f;
 	const float lbm_u = 0.1f;
 	const ulong lbm_T = 180000ull;
@@ -771,9 +771,9 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 
 
 
-/*void main_setup() { // Cessna 172 propeller aircraft; required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
+void main_setup() { // Cessna 172 propeller aircraft; required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
-	const uint3 lbm_N = resolution(float3(1.0f, 0.8f, 0.25f), 8000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	const uint3 lbm_N = resolution(float3(1.0f, 0.8f, 0.25f), 6980u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const float lbm_u = 0.075f;
 	const float lbm_width = 0.95f*(float)lbm_N.x;
 	const ulong lbm_dt = 4ull; // revoxelize rotor every dt time steps
@@ -827,7 +827,7 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 
 /*void main_setup() { // Bell 222 helicopter; required extensions in defines.hpp: FP16C, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
-	const uint3 lbm_N = resolution(float3(1.0f, 1.2f, 0.3f), 8000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	const uint3 lbm_N = resolution(float3(1.0f, 1.2f, 0.3f), 7000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const float lbm_u = 0.16f;
 	const float lbm_length = 0.8f*(float)lbm_N.x;
 	const float si_T = 0.34483f; // 2 revolutions of the main rotor
@@ -1329,7 +1329,7 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 		}
 		lbm.rho[n] = units.rho_hydrostatic(0.0005f, (float)z, 0.5f*(float)Nz); // initialize density with hydrostatic pressure
 		if(x==0u||x==Nx-1u||y==0u||y==Ny-1u||z==0u||z==Nz-1u) lbm.flags[n] = TYPE_S; // all non periodic
-	}); // ####################################################################### run simulation, export images and data ##########################################################################
+	}); // #####################################8000u################################## run simulation, export images and data ##########################################################################
 	lbm.graphics.visualization_modes = VIS_FLAG_LATTICE|VIS_STREAMLINES;
 	lbm.run();
 	//lbm.run(1000u); lbm.u.read_from_device(); println(lbm.u.x[lbm.index(Nx/2u, Ny/2u, Nz/2u)]); wait(); // test for binary identity
