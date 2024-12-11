@@ -710,9 +710,9 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 
 
 
-/*void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
+void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
-	const uint memory = 10000u; // available VRAM of GPU(s) in MB
+	const uint memory = 7000u; // available VRAM of GPU(s) in MB
 	const float lbm_u = 0.05f;
 	const float box_scale = 6.0f;
 	const float si_u = 60.0f;
@@ -749,8 +749,8 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 #else // FP32
 	const string path = get_exe_path()+"FP32/"+to_string(memory)+"MB/";
 #endif // FP32
-	//lbm.write_status(path);
-	//write_file(path+"Cd.dat", "# t\tCd\n");
+	lbm.write_status(path);
+	write_file(path+"Cd.dat", "# t\tCd\n");
 	while(lbm.get_t()<=lbm_T) { // main simulation loop
 		if(lbm.graphics.next_frame(lbm_T, 5.0f)) {
 			Clock clock;
@@ -758,20 +758,20 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 			lbm.F.read_from_device();
 			const float3 lbm_force = lbm.calculate_force_on_object(TYPE_S|TYPE_X);
 			const float Cd = units.si_F(lbm_force.y)/(0.5f*si_rho*sq(si_u)*si_A); // expect Cd to be too large by a factor 1.3-2.0x; need wall model
-			println("\r"+to_string(Cd, 3u)+" "+to_string(clock.stop(), 3u)+"                                                                               ");
-			//write_line(path+"Cd.dat", to_string(lbm.get_t())+"\t"+to_string(Cd, 3u)+"\n");
+			//println("\r"+to_string(Cd, 3u)+" "+to_string(clock.stop(), 3u)+"                                                                               ");
+			write_line(path+"Cd.dat", to_string(lbm.get_t())+"\t"+to_string(Cd, 3u)+"\n");
 #if defined(GRAPHICS) && !defined(INTERACTIVE_GRAPHICS)
 			//lbm.graphics.write_frame(path+"images/");
 #endif // GRAPHICS && !INTERACTIVE_GRAPHICS
 		}
 		lbm.run(1u, lbm_T);
 	}
-	//lbm.write_status(path);
+	lbm.write_status(path);
 } /**/
 
 
 
-void main_setup() { // Cessna 172 propeller aircraft; required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
+/*void main_setup() { // Cessna 172 propeller aircraft; required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
 	const uint3 lbm_N = resolution(float3(1.0f, 0.8f, 0.25f), 6980u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const float lbm_u = 0.075f;
