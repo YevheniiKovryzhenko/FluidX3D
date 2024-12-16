@@ -594,6 +594,8 @@ section R9 390X
 	2217 :crit, 0, 2217
 section HD 7850
 	635 :crit, 0, 635
+section Arc B580 LE
+	5370 :done, 0, 5370
 section Arc A770 LE
 	4568 :done, 0, 4568
 section Arc A750 LE
@@ -745,7 +747,7 @@ section Vega 8 (4750G)
 section Vega 8 (3500U)
 	288 :crit, 0, 288
 section Arc 140V GPU (16GB)
-	1189 :done, 0, 1189
+	1282 :done, 0, 1282
 section Arc Graphics (Ultra 9 185H)
 	724 :done, 0, 724
 section Iris Xe Graphics (i7-1265U)
@@ -828,6 +830,8 @@ section Ultra 7 258V
 	287 :done, 0, 287
 section Ultra 9 185H
 	317 :done, 0, 317
+section i9-14900K
+	490 :done, 0, 490
 section i7-13700K
 	504 :done, 0, 504
 section i7-1265U
@@ -920,6 +924,7 @@ Colors: 🔴 AMD, 🔵 Intel, 🟢 Nvidia, ⚪ Apple, 🟡 ARM, 🟤 Glenfly
 | 🔴&nbsp;Radeon&nbsp;RX&nbsp;580&nbsp;2048SP&nbsp;8GB |           4.94 |           8 |          224 |              868 (59%) |              1622 (56%) |              1240 (43%) |
 | 🔴&nbsp;Radeon&nbsp;R9&nbsp;390X                 |               5.91 |           8 |          384 |             1733 (69%) |              2217 (44%) |              1722 (35%) |
 | 🔴&nbsp;Radeon&nbsp;HD&nbsp;7850                 |               1.84 |           2 |          154 |              112 (11%) |               120 ( 6%) |               635 (32%) |
+| 🔵&nbsp;Arc&nbsp;B580&nbsp;LE                    |              14.59 |          12 |          456 |             1573 (53%) |              5370 (91%) |              2511 (42%) |
 | 🔵&nbsp;Arc&nbsp;A770&nbsp;LE                    |              19.66 |          16 |          560 |             2663 (73%) |              4568 (63%) |              4519 (62%) |
 | 🔵&nbsp;Arc&nbsp;A750&nbsp;LE                    |              17.20 |           8 |          512 |             2555 (76%) |              4314 (65%) |              4047 (61%) |
 | 🔵&nbsp;Arc&nbsp;A580                            |              12.29 |           8 |          512 |             2534 (76%) |              3889 (58%) |              3488 (52%) |
@@ -996,7 +1001,7 @@ Colors: 🔴 AMD, 🔵 Intel, 🟢 Nvidia, ⚪ Apple, 🟡 ARM, 🟤 Glenfly
 | 🔴&nbsp;Radeon&nbsp;Graphics&nbsp;(7800X3D)      |               0.56 |          12 |          102 |              338 (51%) |               498 (37%) |               283 (21%) |
 | 🔴&nbsp;Radeon&nbsp;Vega&nbsp;8&nbsp;(4750G)     |               2.15 |          27 |           57 |              263 (71%) |               511 (70%) |               501 (68%) |
 | 🔴&nbsp;Radeon&nbsp;Vega&nbsp;8&nbsp;(3500U)     |               1.23 |           7 |           38 |              157 (63%) |               282 (57%) |               288 (58%) |
-| 🔵&nbsp;Arc&nbsp;140V&nbsp;GPU&nbsp;(16GB)       |               3.99 |          16 |          137 |              393 (44%) |              1189 (67%) |               608 (34%) |
+| 🔵&nbsp;Arc&nbsp;140V&nbsp;GPU&nbsp;(16GB)       |               3.99 |          16 |          137 |              636 (71%) |              1282 (72%) |               773 (44%) |
 | 🔵&nbsp;Arc&nbsp;Graphics&nbsp;(Ultra&nbsp;9&nbsp;185H) |        4.81 |          14 |           90 |              271 (46%) |               710 (61%) |               724 (62%) |
 | 🔵&nbsp;Iris&nbsp;Xe&nbsp;Graphics&nbsp;(i7-1265U) |             1.92 |          13 |           77 |              342 (68%) |               621 (62%) |               574 (58%) |
 | 🔵&nbsp;UHD&nbsp;Graphics&nbsp;Xe&nbsp;32EUs     |               0.74 |          25 |           51 |              128 (38%) |               245 (37%) |               216 (32%) |
@@ -1039,6 +1044,7 @@ Colors: 🔴 AMD, 🔵 Intel, 🟢 Nvidia, ⚪ Apple, 🟡 ARM, 🟤 Glenfly
 | 🔴&nbsp;Athlon&nbsp;X2&nbsp;QL-65                |               0.03 |           4 |           11 |                3 ( 4%) |                 2 ( 2%) |                 3 ( 2%) |
 | 🔵&nbsp;Core&nbsp;Ultra&nbsp;7&nbsp;258V         |               0.56 |          32 |          137 |              287 (32%) |               123 ( 7%) |               167 ( 9%) |
 | 🔵&nbsp;Core&nbsp;Ultra&nbsp;9&nbsp;185H         |               1.79 |          16 |           90 |              317 (54%) |               267 (23%) |               288 (25%) |
+| 🔵&nbsp;Core&nbsp;i9-14900K                      |               3.74 |          32 |           96 |              443 (71%) |               453 (36%) |               490 (39%) |
 | 🔵&nbsp;Core&nbsp;i7-13700K                      |               2.51 |          64 |           90 |              504 (86%) |               398 (34%) |               424 (36%) |
 | 🔵&nbsp;Core&nbsp;i7-1265U                       |               1.23 |          32 |           77 |              128 (26%) |                62 ( 6%) |                58 ( 6%) |
 | 🔵&nbsp;Core&nbsp;i9-11900KB                     |               0.84 |          32 |           51 |              109 (33%) |               195 (29%) |               208 (31%) |
