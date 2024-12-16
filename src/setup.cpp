@@ -710,7 +710,7 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 
 
 
-void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
+/*void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
 	const uint memory = 7000u; // available VRAM of GPU(s) in MB
 	const float lbm_u = 0.05f;
@@ -735,8 +735,7 @@ void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FO
 	mesh->translate(float3(0.0f, units.x(0.5f*(0.5f*box_scale*si_length-si_width))-mesh->pmin.y, 1.0f-mesh->pmin.z));
 	lbm.voxelize_mesh_on_device(mesh, TYPE_S|TYPE_X); // https://github.com/nathanrooy/ahmed-bluff-body-cfd/blob/master/geometry/ahmed_25deg_m.stl converted to binary
 	const uint Nx=lbm.get_Nx(), Ny=lbm.get_Ny(), Nz=lbm.get_Nz(); parallel_for(lbm.get_N(), [&](ulong n) { uint x=0u, y=0u, z=0u; lbm.coordinates(n, x, y, z);
-		if(z==0u) lbm.flags[n] = TYPE_S;
-		if(lbm.flags[n]!=TYPE_S) lbm.u.y[n] = lbm_u;
+		if(z==0u) lbm.flasi_lengthTYPE_S) lbm.u.y[n] = lbm_u;
 		if(x==0u||x==Nx-1u||y==0u||y==Ny-1u||z==Nz-1u) lbm.flags[n] = TYPE_E;
 	}); // ####################################################################### run simulation, export images and data ##########################################################################
 	lbm.graphics.visualization_modes = VIS_FLAG_SURFACE|VIS_Q_CRITERION;
@@ -770,10 +769,148 @@ void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FO
 } /**/
 
 
+void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP16S, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
+	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
+	// setup control flags/settings:
+	const std::string test_case_name = "CH10SH"; //stl model name and for logging directory name
+#define LOG_DATA false //enable/disable data printout to text file
+#define PRINT_DATA false //enable/disable data printout to console	 
+	const uint memory = 7000u; // available VRAM of GPU(s) in MB
+	
+	//flow parameters:
+	const float u_lbm = 0.15f; //simulation flow speed
+	const float u_si = 30.0f; //si flow speed [m/s]
+	const float nu_si = 1.48E-5f;
+	const float rho_si = 1.225f; // flow density [kg/m3]
+	
+	//test box parameters:
+	const float X_si=2.0f; //m
+	const float Y_si=1.5f; //m
+	const float Z_si=0.3f; //m
+	const float box_scale = 1.2f;
+
+	//simulation time:
+	const float T_si = 0.25f; //time [s]
+
+	//other:
+	const float A_si = 0.03*1.5; // m2 reference area (for aero forces)
+
+	// Initial setup (memory allocation and scaling)
+	const float Lx_si = units.x(box_scale*X_si);
+	const float Ly_si = units.x(box_scale*Y_si);
+	const float Lz_si = units.x(0.5f*(box_scale-1.0f)*Y_si+Z_si);
+	const uint3 N_lbm = resolution(float3(Lx_si, Ly_si, Lz_si), memory); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	units.set_m_kg_s((float)N_lbm.y, u_lbm, 1.0f, box_scale*Y_si, u_si, rho_si);
+
+	const float nu_lbm = units.nu(nu_si);
+	const ulong T_lbm = units.t(T_si);
+	const float lbm_scale_length = units.x(X_si);
+
+#if PRINT_DATA 
+	print_info("Re = "+to_string(to_uint(units.si_Re(Y_si, u_si, nu_si))));
+#endif
+
+	LBM lbm(N_lbm, nu_lbm);
+	// ###################################################################################### define geometry ######################################################################################
+	// import stl:
+	const float3 offset = lbm.center() - float3(units.x(0.2f*(box_scale*X_si)), 0.0f, 0.0f);
+	Mesh* wing = read_stl(get_exe_path()+"../stl/"+test_case_name+".stl", lbm.size(), offset, float3x3(float3(1, 0, 0), radians(90.0f)), lbm_scale_length);
+	
+	// render:
+	lbm.voxelize_mesh_on_device(wing, TYPE_S);
+	
+	//setup boundary conditions:
+	const uint Nx=lbm.get_Nx(), Ny=lbm.get_Ny(), Nz=lbm.get_Nz(); parallel_for(lbm.get_N(), [&](ulong n) { uint x=0u, y=0u, z=0u; lbm.coordinates(n, x, y, z);
+		if(lbm.flags[n]!=TYPE_S) lbm.u.x[n] = u_lbm;
+		if(x==0u||x==Nx-1u||y==0u||y==Ny-1u||z==0u||z==Nz-1u) lbm.flags[n] = TYPE_E; // all non periodic	
+	}); // ####################################################################### run simulation, export images and data ##########################################################################
+	lbm.graphics.visualization_modes = VIS_FLAG_SURFACE|VIS_Q_CRITERION;
+	lbm.graphics.set_camera_centered(20.0f, 30.0f, 10.0f, 1.648722f);
+	lbm.run(0u, T_lbm); // initialize simulation
+
+	
+#if LOG_DATA //setup path for data logging
+	string path;
+	time_t now = time(0);
+	tm *ltm = localtime(&now);
+	const string unique_fldr_name = to_string(ltm->tm_year+1900)+"_"+to_string(ltm->tm_mon)+"_"+to_string(ltm->tm_mday)+"_"+to_string(ltm->tm_hour)+"_"+to_string(ltm->tm_min)+"_"+to_string(ltm->tm_sec)+"/";
+	
+#if defined(FP16S)
+	path = get_exe_path()+"logs/"+test_case_name+"FP16S/"+to_string(memory)+"MB/"+unique_fldr_name;
+#elif defined(FP16C)
+	path = get_exe_path()+"logs/"+test_case_name+"FP16C/"+to_string(memory)+"MB/"+unique_fldr_name;
+#else // FP32
+	path = get_exe_path()+"logs/"+test_case_name+"FP32/"+to_string(memory)+"MB/"+unique_fldr_name;
+#endif // FP32
+
+#if PRINT_DATA
+	print_info("Logging directory: " + path + "\n");
+#endif
+	
+	lbm.write_status(path);
+	write_file(path+"forces_lbm.csv", "t,Fx,Fy,Fz\n");
+	write_file(path+"forces_si.csv", "t,Fx,Fy,Fz\n");
+	write_file(path+"aero.csv", "t,Cd,Cl\n");
+#endif
+
+	// println();
+	while(lbm.get_t()<=T_lbm) { // main simulation loop
+		if(lbm.graphics.next_frame(T_lbm, 5.0f)) {
+			lbm.calculate_force_on_boundaries();
+			lbm.F.read_from_device();
+			
+			const float t_lbm = lbm.get_t();
+			const float3 forces_lbm = lbm.calculate_force_on_object(TYPE_S);
+			
+			const float t_si = units.t(t_lbm);
+			const float3 forces_si = float3(units.si_F(forces_lbm.x), units.si_F(forces_lbm.y), units.si_F(forces_lbm.z));
+			
+			const float Cd = forces_si.x/(0.5f*rho_si*sq(u_si)*A_si);
+			const float Cl = forces_si.z/(0.5f*rho_si*sq(u_si)*A_si);
+
+#if PRINT_DATA
+			print("\r"\
+				"Fx="+to_string(forces_si.x, 4u)+", "+\
+				"Fy="+to_string(forces_si.y, 4u)+", "+\
+				"Fz="+to_string(forces_si.z, 4u)+", "+\
+				"Cd="+to_string(Cd, 4u)+", "+\
+				"Cl="+to_string(Cl, 4u)+"                                                                               ");
+#endif
+			
+#if LOG_DATA 
+			write_line(path+"forces_lbm.csv",\
+				to_string(t_lbm, 4u)+","+\
+				to_string(forces_lbm.x, 4u)+","+\
+				to_string(forces_lbm.y, 4u)+","+\
+				to_string(forces_lbm.z, 4u)+"\n");
+
+			write_line(path+"forces_si.csv",\
+				to_string(t_si, 4u)+", "+\
+				to_string(forces_si.x, 4u)+","+\
+				to_string(forces_si.y, 4u)+","+\
+				to_string(forces_si.z, 4u)+"\n");
+
+			write_line(path+"aero_si.csv",\
+				to_string(t_si, 4u)+","+\
+				to_string(Cd, 4u)+","+\
+				to_string(Cl, 4u)+"\n");
+#endif
+			 
+#if defined(GRAPHICS) && !defined(INTERACTIVE_GRAPHICS)
+			//lbm.graphics.write_frame(path+"images/");
+#endif // GRAPHICS && !INTERACTIVE_GRAPHICS
+		}
+		lbm.run(1u, T_lbm);
+	}
+#if LOG_DATA
+	lbm.write_status(path);
+#endif
+} /**/
+
 
 /*void main_setup() { // Cessna 172 propeller aircraft; required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
-	const uint3 lbm_N = resolution(float3(1.0f, 0.8f, 0.25f), 6980u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	const uint3 lbm_N = resolution(float3(1.0f, 0.8f, 0.25f), 6500u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const float lbm_u = 0.075f;
 	const float lbm_width = 0.95f*(float)lbm_N.x;
 	const ulong lbm_dt = 4ull; // revoxelize rotor every dt time steps
@@ -827,7 +964,7 @@ void main_setup() { // Ahmed body; required extensions in defines.hpp: FP16C, FO
 
 /*void main_setup() { // Bell 222 helicopter; required extensions in defines.hpp: FP16C, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
-	const uint3 lbm_N = resolution(float3(1.0f, 1.2f, 0.3f), 7000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	const uint3 lbm_N = resolution(float3(1.0f, 1.2f, 0.3f), 6000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const float lbm_u = 0.16f;
 	const float lbm_length = 0.8f*(float)lbm_N.x;
 	const float si_T = 0.34483f; // 2 revolutions of the main rotor
