@@ -1,0 +1,11 @@
+Grid Resolution = 565 x 813 x 271 = 124482495
+Grid Domains = 1 x 1 x 1 = 1
+LBM Type = D3Q15 SRT (FP32/FP16S)
+Memory Usage = CPU 3442 MB, GPU 1x 7029 MB
+Maximum Allocation Size = 3561 MB
+Time Steps = 0 / 45167
+Runtime = 0s (total) = 0s (LBM) + 0s (rendering and data evaluation)
+Average MLUPs/s = 0
+Kinematic Viscosity = 1.67116664E-5
+Relaxation Time = 5.00050116E-1
+Maximum Reynolds Number = 3.54621196E7

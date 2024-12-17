@@ -1,7 +1,6 @@
 #include "setup.hpp"
 
 
-
 #ifdef BENCHMARK
 #include "info.hpp"
 void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK, optionally FP16S or FP16C
@@ -769,51 +768,70 @@ void main_setup() { // benchmark; required extensions in defines.hpp: BENCHMARK,
 } /**/
 
 
-void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP16S, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, MOVING_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
+void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP16S, FORCE_FIELD, EQUILIBRIUM_BOUNDARIES, SUBGRID, optionally INTERACTIVE_GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
 	// setup control flags/settings:
 	const std::string test_case_name = "CH10SH"; //stl model name and for logging directory name
-#define LOG_DATA false //enable/disable data printout to text file
-#define PRINT_DATA false //enable/disable data printout to console	 
+#define LOG_DATA true //enable/disable data printout to text file
+#define PRINT_DATA true //enable/disable data printout to console	 
 	const uint memory = 7000u; // available VRAM of GPU(s) in MB
+
+	/*
+	Coordinate frame:
+	X - towards tail (in the the direction of the flow velocity)
+	Y - in the direction of the right wing
+	Z - up
+	*/
 	
-	//flow parameters:
-	const float u_lbm = 0.15f; //simulation flow speed
+	//flow parameters:	
 	const float u_si = 30.0f; //si flow speed [m/s]
 	const float nu_si = 1.48E-5f;
 	const float rho_si = 1.225f; // flow density [kg/m3]
 	
-	//test box parameters:
-	const float X_si=2.0f; //m
-	const float Y_si=1.5f; //m
-	const float Z_si=0.3f; //m
-	const float box_scale = 1.2f;
+	//Object Parameters:
+	const float wing_span_si = 1.5f; // [m]
+	const float wing_chord_si = 0.25f; // [m]
+	const float wing_chickness_si = 0.03f; // [m]
+	const float A_si = wing_chickness_si * wing_span_si; // m2 reference area (for aero forces)
+	
+	//test box parameters:	
+	const float3 box_scale(5.0f, 1.2f, 20.0f); //XYZ box scale factors
+
 
 	//simulation time:
 	const float T_si = 0.25f; //time [s]
 
-	//other:
-	const float A_si = 0.03*1.5; // m2 reference area (for aero forces)
+	/*
+	u_lbm is a (kind of) free parameter. 
+	Its exact choice has no effects on the physics of the system. 
+	However large value >0.1 will cause density oscillations 
+	and even larger values cause instability. The smaller the value, 
+	the more time steps the simulation has to compute - u_lbm is 
+	inverse proportional to simulation runtime. Ideally you want 
+	to choose it as large as possible, but small enough to not 
+	have non-physical artifacts like density fluctuations. 
+	From my testing, the ideal value is around 0.075.
+	*/
+	const float u_lbm = 0.075f; //simulation flow speed
 
 	// Initial setup (memory allocation and scaling)
-	const float Lx_si = units.x(box_scale*X_si);
-	const float Ly_si = units.x(box_scale*Y_si);
-	const float Lz_si = units.x(0.5f*(box_scale-1.0f)*Y_si+Z_si);
-	const uint3 N_lbm = resolution(float3(Lx_si, Ly_si, Lz_si), memory); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
-	units.set_m_kg_s((float)N_lbm.y, u_lbm, 1.0f, box_scale*Y_si, u_si, rho_si);
+	const float3 box_size_si(wing_chord_si * box_scale.x, wing_span_si * box_scale.y, wing_chickness_si * box_scale.z);
+
+	const uint3 N_lbm = resolution(box_size_si, memory); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
+	units.set_m_kg_s((float)N_lbm.y, u_lbm, 1.0f, box_size_si.y, u_si, rho_si);
 
 	const float nu_lbm = units.nu(nu_si);
 	const ulong T_lbm = units.t(T_si);
-	const float lbm_scale_length = units.x(X_si);
+	const float lbm_scale_length = units.x(wing_span_si);
 
 #if PRINT_DATA 
-	print_info("Re = "+to_string(to_uint(units.si_Re(Y_si, u_si, nu_si))));
+	print_info("Re = "+to_string(to_uint(units.si_Re(wing_chord_si, u_si, nu_si))));
 #endif
 
 	LBM lbm(N_lbm, nu_lbm);
 	// ###################################################################################### define geometry ######################################################################################
 	// import stl:
-	const float3 offset = lbm.center() - float3(units.x(0.2f*(box_scale*X_si)), 0.0f, 0.0f);
+	const float3 offset = lbm.center() + float3(-units.x((box_size_si.x - 3*wing_chord_si)/2.0f), 0.0f, 0.0f);
 	Mesh* wing = read_stl(get_exe_path()+"../stl/"+test_case_name+".stl", lbm.size(), offset, float3x3(float3(1, 0, 0), radians(90.0f)), lbm_scale_length);
 	
 	// render:
@@ -832,15 +850,20 @@ void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP1
 #if LOG_DATA //setup path for data logging
 	string path;
 	time_t now = time(0);
-	tm *ltm = localtime(&now);
-	const string unique_fldr_name = to_string(ltm->tm_year+1900)+"_"+to_string(ltm->tm_mon)+"_"+to_string(ltm->tm_mday)+"_"+to_string(ltm->tm_hour)+"_"+to_string(ltm->tm_min)+"_"+to_string(ltm->tm_sec)+"/";
-	
+	tm ltm;
+#if defined(_WIN32)
+	localtime_s(&ltm, &now);
+#else
+	localtime_r(&now, &ltm);
+#endif
+	const string unique_fldr_name = to_string(ltm.tm_year + 1900) + "_" + to_string(ltm.tm_mon) + "_" + to_string(ltm.tm_mday) + "_" + to_string(ltm.tm_hour) + "_" + to_string(ltm.tm_min) + "_" + to_string(ltm.tm_sec) + "/";
+
 #if defined(FP16S)
-	path = get_exe_path()+"logs/"+test_case_name+"FP16S/"+to_string(memory)+"MB/"+unique_fldr_name;
+	path = get_exe_path()+"../logs/"+test_case_name+"FP16S/"+to_string(memory)+"MB/"+unique_fldr_name;
 #elif defined(FP16C)
-	path = get_exe_path()+"logs/"+test_case_name+"FP16C/"+to_string(memory)+"MB/"+unique_fldr_name;
+	path = get_exe_path()+"../logs/"+test_case_name+"FP16C/"+to_string(memory)+"MB/"+unique_fldr_name;
 #else // FP32
-	path = get_exe_path()+"logs/"+test_case_name+"FP32/"+to_string(memory)+"MB/"+unique_fldr_name;
+	path = get_exe_path()+"../logs/"+test_case_name+"FP32/"+to_string(memory)+"MB/"+unique_fldr_name;
 #endif // FP32
 
 #if PRINT_DATA
@@ -859,10 +882,10 @@ void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP1
 			lbm.calculate_force_on_boundaries();
 			lbm.F.read_from_device();
 			
-			const float t_lbm = lbm.get_t();
+			const ulong t_lbm = lbm.get_t();
 			const float3 forces_lbm = lbm.calculate_force_on_object(TYPE_S);
 			
-			const float t_si = units.t(t_lbm);
+			const float t_si = units.si_t(t_lbm);
 			const float3 forces_si = float3(units.si_F(forces_lbm.x), units.si_F(forces_lbm.y), units.si_F(forces_lbm.z));
 			
 			const float Cd = forces_si.x/(0.5f*rho_si*sq(u_si)*A_si);
@@ -879,7 +902,7 @@ void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP1
 			
 #if LOG_DATA 
 			write_line(path+"forces_lbm.csv",\
-				to_string(t_lbm, 4u)+","+\
+				to_string(t_lbm)+","+\
 				to_string(forces_lbm.x, 4u)+","+\
 				to_string(forces_lbm.y, 4u)+","+\
 				to_string(forces_lbm.z, 4u)+"\n");
