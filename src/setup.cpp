@@ -774,7 +774,7 @@ void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP1
 	const std::string test_case_name = "CH10SH"; //stl model name and for logging directory name
 #define LOG_DATA true //enable/disable data printout to text file
 #define PRINT_DATA true //enable/disable data printout to console	 
-	const uint memory = 7000u; // available VRAM of GPU(s) in MB
+	const uint memory = 6500u; // available VRAM of GPU(s) in MB
 
 	/*
 	Coordinate frame:
@@ -812,7 +812,7 @@ void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP1
 	have non-physical artifacts like density fluctuations. 
 	From my testing, the ideal value is around 0.075.
 	*/
-	const float u_lbm = 0.075f; //simulation flow speed
+	const float u_lbm = 0.09f; //simulation flow speed
 
 	// Initial setup (memory allocation and scaling)
 	const float3 box_size_si(wing_chord_si * box_scale.x, wing_span_si * box_scale.y, wing_chickness_si * box_scale.z);
@@ -842,6 +842,7 @@ void main_setup() { //CH10SH Wing Study; required extensions in defines.hpp: FP1
 		if(lbm.flags[n]!=TYPE_S) lbm.u.x[n] = u_lbm;
 		if(x==0u||x==Nx-1u||y==0u||y==Ny-1u||z==0u||z==Nz-1u) lbm.flags[n] = TYPE_E; // all non periodic	
 	}); // ####################################################################### run simulation, export images and data ##########################################################################
+	
 	lbm.graphics.visualization_modes = VIS_FLAG_SURFACE|VIS_Q_CRITERION;
 	lbm.graphics.set_camera_centered(20.0f, 30.0f, 10.0f, 1.648722f);
 	lbm.run(0u, T_lbm); // initialize simulation
